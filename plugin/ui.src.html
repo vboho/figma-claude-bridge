@@ -1,0 +1,194 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --orange:#e8825a; --green:#4cd98a; --blue:#5ab0ff; --text:#f1ece6; --muted:#a39b93; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { font: 13px/1.4 Inter, system-ui, sans-serif; color: var(--text); background: #14110f; display: flex; flex-direction: column; overflow: hidden; }
+
+  header { height: 50px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 14px; background: #1a1411; border-bottom: 1px solid rgba(255,255,255,.08); font-weight: 600; font-size: 16px; }
+  header svg { width: 22px; height: 22px; flex: none; }
+  header .title { flex: 1; }
+  header .hbtn { width: 28px; height: 28px; flex: none; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 8px; background: none; cursor: pointer; padding: 0; }
+  header .hbtn:hover { background: rgba(255,255,255,.1); }
+  header .hbtn svg { width: 12px; height: 12px; opacity: .8; }
+
+  .stage { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+  .stage video, .stage .poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 55% 50%; transition: filter .6s ease; }
+  .stage .poster { background: center / cover no-repeat url("{{CAT_POSTER}}"); }
+  .stage.offline video, .stage.offline .poster { filter: grayscale(.85) brightness(.5); }
+  .shade-top { position: absolute; left: 0; right: 0; top: 0; height: 80px; background: linear-gradient(rgba(10,8,7,.75), transparent); pointer-events: none; }
+  .shade-bot { position: absolute; left: 0; right: 0; bottom: 0; height: 120px; background: linear-gradient(transparent, rgba(10,8,7,.8)); pointer-events: none; }
+
+  .top { position: absolute; top: 14px; left: 14px; right: 14px; display: flex; align-items: center; justify-content: space-between; }
+  #reconnect { display: flex; align-items: center; gap: 8px; background: none; border: 0; color: var(--text); font: inherit; cursor: pointer; padding: 0; }
+  #reconnect .ic { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,.16); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; transition: background .2s; }
+  #reconnect:hover .ic { background: rgba(255,255,255,.26); }
+  #reconnect svg { width: 16px; height: 16px; }
+  #reconnect.spin svg { animation: spin .7s linear; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .badge { display: flex; align-items: center; gap: 7px; padding: 4px 13px; border-radius: 999px; font-size: 13px; color: var(--green); background: rgba(76,217,138,.18); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  .badge i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .badge.working { color: var(--blue); background: rgba(90,176,255,.18); }
+  .badge.working i { animation: pulse 1s ease-in-out infinite; }
+  .badge.offline { color: var(--orange); background: rgba(232,130,90,.18); }
+  @keyframes pulse { 50% { opacity: .3; } }
+
+  .logs { position: absolute; left: 14px; right: 14px; bottom: 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,.12); background: rgba(20,16,14,.55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); overflow: hidden; }
+  .logs .head { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; color: var(--muted); font-size: 13px; cursor: pointer; background: rgba(255,255,255,.05); user-select: none; }
+  .logs .chev { width: 14px; height: 14px; transition: transform .25s; }
+  .logs.open .chev { transform: rotate(180deg); }
+  #list { padding: 0 14px; max-height: 34px; overflow: hidden; transition: max-height .25s ease; font: 12px/1 ui-monospace, Menlo, monospace; }
+  .logs.open #list { max-height: 150px; overflow: auto; }
+  .row { display: flex; align-items: center; gap: 10px; height: 34px; color: #d8d1c9; }
+  .row i { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--green); flex: none; }
+  .row .t { color: var(--muted); }
+  .row.err i { border-color: #f26d6d; } .row.err { color: #f26d6d; }
+  .empty { color: var(--muted); }
+
+
+  /* ---- мини-режим (окно 250x76) ---- */
+  #miniInfo { display: none; }
+  body.mini { flex-direction: row; align-items: center; gap: 12px; padding: 6px 10px 6px 6px; }
+  body.mini header, body.mini .shade-top, body.mini .shade-bot, body.mini .top, body.mini .logs { display: none; }
+  body.mini .stage { flex: none; width: 64px; height: 64px; border-radius: 50%; border: 2px solid rgba(255,255,255,.14); }
+  body.mini .stage video, body.mini .stage .poster { inset: auto; width: 220px; height: 220px; left: -102px; top: -45px; }
+  body.mini #miniInfo { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+  #miniInfo .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); flex: none; }
+  #miniInfo.offline .dot { background: var(--orange); }
+  #miniInfo.working .dot { background: var(--blue); animation: pulse 1s ease-in-out infinite; }
+  #miniInfo .txt { flex: 1; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #miniInfo.working .txt { color: var(--blue); } #miniInfo.offline .txt { color: var(--orange); }
+  #miniInfo button { width: 30px; height: 30px; border: 0; border-radius: 50%; background: rgba(255,255,255,.1); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+  #miniInfo button:hover { background: rgba(255,255,255,.2); }
+  #miniInfo button svg { width: 14px; height: 14px; }
+
+  @media (prefers-reduced-motion: reduce) { .badge.working i, #miniInfo.working .dot { animation: none; } }
+</style>
+</head>
+<body>
+  <header>
+    <svg viewBox="0 0 24 24" fill="none" stroke="#e8825a" stroke-width="2" stroke-linecap="round"><path d="M12 2v6M12 16v6M2 12h6M16 12h6M5 5l4 4M15 15l4 4M19 5l-4 4M9 15l-4 4"/></svg>
+    <span class="title">Claude to Figma</span>
+    <button class="hbtn" id="minBtn" aria-label="Свернуть" title="Свернуть"><svg viewBox="0 0 12 12" fill="none" stroke="#f1ece6" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 9h9"/></svg></button>
+  </header>
+
+  <div id="stage" class="stage offline">
+    <div class="poster"></div>
+    <video id="cat" muted playsinline loop preload="auto" src="{{CAT_WEBM}}"></video>
+    <div class="shade-top"></div><div class="shade-bot"></div>
+
+    <div class="top">
+      <button id="reconnect"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#f1ece6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11A8 8 0 0 0 5.6 6.3L4 8M4 4v4h4M4 13a8 8 0 0 0 14.4 4.7L20 16M20 20v-4h-4"/></svg></span>Reconnect</button>
+      <div id="badge" class="badge offline"><i></i><span id="badgeText">Offline</span></div>
+    </div>
+
+    <div id="logs" class="logs">
+      <div class="head" id="logHead"><span>Connection logs</span>
+        <svg class="chev" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9l5-5 5 5"/></svg></div>
+      <div id="list"><div class="row empty">No events yet</div></div>
+    </div>
+  </div>
+
+  <div id="miniInfo" class="offline">
+    <span class="dot"></span><span class="txt" id="miniText">Offline</span>
+    <button id="expandBtn" aria-label="Развернуть" title="Развернуть"><svg viewBox="0 0 14 14" fill="none" stroke="#f1ece6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 1.5h4v4M5.5 12.5h-4v-4M12.5 1.5L8 6M1.5 12.5L6 8"/></svg></button>
+  </div>
+
+<script>
+const URL_WS = new URLSearchParams(location.search).get('ws') || 'ws://localhost:3055';
+const IDLE_MS = 2000;           // сколько ждать после последней команды, прежде чем кот закончит работу
+let ws, retry, connected = false, pending = 0, idleTimer = null;
+
+const $ = (id) => document.getElementById(id);
+const stage = $('stage'), video = $('cat'), badge = $('badge'), badgeText = $('badgeText');
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---- журнал ---- */
+function log(text, arrow, isErr) {
+  const list = $('list');
+  if (list.firstChild && list.firstChild.classList.contains('empty')) list.innerHTML = '';
+  const r = document.createElement('div');
+  r.className = 'row' + (isErr ? ' err' : '');
+  r.innerHTML = '<i></i><span class="t"></span><span class="m"></span>';
+  r.querySelector('.t').textContent = new Date().toLocaleTimeString([], { hour12: false });
+  r.querySelector('.m').textContent = (arrow ? arrow + ' ' : '') + text;
+  list.prepend(r);
+  while (list.children.length > 50) list.lastChild.remove();
+}
+$('logHead').onclick = () => $('logs').classList.toggle('open');
+
+/* ---- состояние ---- */
+function render() {
+  const working = connected && (pending > 0 || idleTimer);
+  stage.classList.toggle('offline', !connected);
+  badge.classList.toggle('offline', !connected);
+  badge.classList.toggle('working', !!working);
+  const label = !connected ? 'Offline' : working ? 'Working' : 'Active';
+  badgeText.textContent = label;
+  $('miniText').textContent = label;
+  $('miniInfo').className = !connected ? 'offline' : working ? 'working' : '';
+}
+
+/* ---- свернуть / развернуть окно ---- */
+function setMini(on, save) {
+  document.body.classList.toggle('mini', on);
+  parent.postMessage({ pluginMessage: { type: 'resize', mini: on, save: save !== false } }, '*');
+}
+$('minBtn').onclick = () => setMini(true);
+$('expandBtn').onclick = () => setMini(false);
+function startCat() {
+  if (reduceMotion) return;
+  video.loop = true;
+  if (video.paused) video.play().catch(() => {});
+}
+function stopCat() {           // доиграть цикл до конца и остановиться на первом кадре
+  video.loop = false;
+  if (video.paused) { video.currentTime = 0; return; }
+}
+video.addEventListener('ended', () => { video.currentTime = 0; video.pause(); });
+
+function touchWork() {
+  startCat();
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => { idleTimer = null; if (pending === 0) { stopCat(); render(); } }, IDLE_MS);
+  render();
+}
+
+/* ---- соединение ---- */
+function connect() {
+  clearTimeout(retry);
+  try { ws && ws.close(); } catch (e) {}
+  ws = new WebSocket(URL_WS);
+  ws.onopen = () => { ws.send(JSON.stringify({ role: 'plugin' })); connected = true; log('Connected to Claude Code'); render(); };
+  ws.onclose = () => { connected = false; pending = 0; clearTimeout(idleTimer); idleTimer = null; stopCat(); render(); retry = setTimeout(connect, 2000); };
+  ws.onerror = () => {};
+  ws.onmessage = (ev) => {
+    const msg = JSON.parse(ev.data);
+    log(msg.type, '←');
+    pending++; touchWork();
+    parent.postMessage({ pluginMessage: msg }, '*');
+  };
+}
+onmessage = (ev) => {
+  const msg = ev.data.pluginMessage;
+  if (msg && msg.type === 'init') { document.body.classList.toggle('mini', !!msg.mini); return; }
+  if (msg && msg.type === 'result') {
+    log(msg.error ? 'error' : 'ok', '→', !!msg.error);
+    pending = Math.max(0, pending - 1); touchWork();
+    if (ws && ws.readyState === 1) ws.send(JSON.stringify(msg));
+  }
+};
+
+$('reconnect').onclick = (e) => {
+  const b = e.currentTarget; b.classList.remove('spin'); void b.offsetWidth; b.classList.add('spin');
+  connect();
+};
+render(); connect();
+parent.postMessage({ pluginMessage: { type: 'ready' } }, '*');
+</script>
+</body>
+</html>
