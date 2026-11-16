@@ -8,7 +8,7 @@ Claude Code ⇄ (MCP, stdio) ⇄ server/server.js ⇄ (WebSocket localhost:3055)
 
 ## Быстрая установка: пусть Claude сделает всё сам
 
-Откройте Claude Code и вставьте этот текст целиком (замените `https://github.com/vgbogomygkov-prog/figma-claude-bridge` на адрес этого репозитория):
+Откройте Claude Code и вставьте этот текст целиком:
 
 ````text
 Установи мне плагин Claude Code Bridge для Figma из репозитория https://github.com/vgbogomygkov-prog/figma-claude-bridge.
