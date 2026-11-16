@@ -8,10 +8,10 @@ Claude Code ⇄ (MCP, stdio) ⇄ server/server.js ⇄ (WebSocket localhost:3055)
 
 ## Быстрая установка: пусть Claude сделает всё сам
 
-Откройте Claude Code и вставьте этот текст целиком (замените `<URL>` на адрес этого репозитория):
+Откройте Claude Code и вставьте этот текст целиком (замените `https://github.com/vgbogomygkov-prog/figma-claude-bridge` на адрес этого репозитория):
 
 ````text
-Установи мне плагин Claude Code Bridge для Figma из репозитория <URL>.
+Установи мне плагин Claude Code Bridge для Figma из репозитория https://github.com/vgbogomygkov-prog/figma-claude-bridge.
 
 1. Склонируй репозиторий в ~/figma-claude-bridge (если папка уже есть, сделай git pull).
 2. Проверь, что установлен Node.js 18+. Если нет, скажи мне, как его поставить.
@@ -28,7 +28,7 @@ Claude Code ⇄ (MCP, stdio) ⇄ server/server.js ⇄ (WebSocket localhost:3055)
 
 ## Установка вручную
 
-1. `git clone <URL> && cd figma-claude-bridge/server && npm install`
+1. `git clone https://github.com/vgbogomygkov-prog/figma-claude-bridge && cd figma-claude-bridge/server && npm install`
 2. Подключите мост к Claude Code (путь замените на свой):
    ```bash
    claude mcp add -s user figma-bridge -- node /ABS/PATH/figma-claude-bridge/server/server.js
